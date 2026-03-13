@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Media - Security Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12">
+        <h1 class="display-5 mb-3">
+            <i class="fas fa-upload text-danger me-3"></i>
+            Upload Media
+        </h1>
+        <p class="lead text-muted">
+            Upload images or videos of suspects for facial recognition and analysis
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Media Upload
+                </h5>
+            </div>
+            <div class="card-body p-5">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <!-- Suspect ID Input -->
+                    <div class="mb-4">
+                        <label for="suspect_id" class="form-label">
+                            <i class="fas fa-id-card me-2"></i>Suspect ID (Optional)
+                        </label>
+                        <input type="text" class="form-control search-box" id="suspect_id" name="suspect_id" 
+                               placeholder="Enter suspect ID or leave blank to auto-generate">
+                        <div class="form-text text-muted">
+                            If left blank, a unique suspect ID will be automatically generated
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Zone -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-file-image me-2"></i>Select Media File
+                        </label>
+                        <div class="upload-zone" onclick="document.getElementById('file').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h5>Click to Upload or Drag & Drop</h5>
+                            <p class="text-muted mb-0">
+                                Supported formats: JPG, PNG, GIF, MP4, AVI, MOV, MKV
+                            </p>
+                            <p class="text-muted small">
+                                Maximum file size: 500MB
+                            </p>
+                            <input type="file" id="file" name="file" style="display: none;" 
+                                   accept=".jpg,.jpeg,.png,.gif,.bmp,.mp4,.avi,.mov,.mkv" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Selected File Display -->
+                    <div id="fileInfo" class="mb-4" style="display: none;">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file fa-2x me-3 text-info"></i>
+                                    <div>
+                                        <h6 class="mb-1" id="fileName"></h6>
+                                        <p class="mb-0 text-muted small" id="fileSize"></p>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="clearFile()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Area -->
+                    <div id="previewArea" class="mb-4" style="display: none;">
+                        <label class="form-label">
+                            <i class="fas fa-eye me-2"></i>Preview
+                        </label>
+                        <div class="card bg-dark">
+                            <div class="card-body text-center">
+                                <img id="imagePreview" class="img-fluid rounded" style="max-height: 400px;">
+                                <video id="videoPreview" class="img-fluid rounded" controls style="max-height: 400px; display: none;"></video>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Options -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-cogs me-2"></i>Analysis Options
+                        </label>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="faceAnalysis" checked disabled>
+                                    <label class="form-check-label" for="faceAnalysis">
+                                        Face Recognition
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="locationAnalysis" checked disabled>
+                                    <label class="form-check-label" for="locationAnalysis">
+                                        Location Analysis
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="socialSearch" checked disabled>
+                                    <label class="form-check-label" for="socialSearch">
+                                        Social Media Search
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text text-muted">
+                            All analysis modules will run automatically after upload
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn" disabled>
+                            <i class="fas fa-upload me-2"></i>
+                            Upload & Analyze
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Progress Bar (hidden by default) -->
+                <div id="uploadProgress" class="mt-4" style="display: none;">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Uploading and analyzing...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             id="progressBar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <p class="text-muted small mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        This may take a few minutes depending on file size
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upload Guidelines -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Upload Guidelines
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i>Best Practices</h6>
+                        <ul class="text-muted small">
+                            <li>Use high-resolution images when possible</li>
+                            <li>Ensure face is clearly visible and well-lit</li>
+                            <li>Include background context for location analysis</li>
+                            <li>Upload multiple angles if available</li>
+                            <li>For videos, ensure stable footage</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-exclamation-triangle text-warning me-2"></i>Limitations</h6>
+                        <ul class="text-muted small">
+                            <li>Face masks may reduce accuracy</li>
+                            <li>Extreme angles may not be recognized</li>
+                            <li>Low-light images have lower success rate</li>
+                            <li>Social media search depends on public profiles</li>
+                            <li>Results may take several minutes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const fileInput = document.getElementById('file');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const previewArea = document.getElementById('previewArea');
+const imagePreview = document.getElementById('imagePreview');
+const videoPreview = document.getElementById('videoPreview');
+const uploadBtn = document.getElementById('uploadBtn');
+const uploadForm = document.getElementById('uploadForm');
+const uploadProgress = document.getElementById('uploadProgress');
+const progressBar = document.getElementById('progressBar');
+const progressPercent = document.getElementById('progressPercent');
+
+// Handle file selection
+fileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        displayFileInfo(file);
+        displayPreview(file);
+        uploadBtn.disabled = false;
+    }
+});
+
+// Handle drag and drop
+const uploadZone = document.querySelector('.upload-zone');
+
+uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.style.borderColor = '#e94560';
+    uploadZone.style.background = 'rgba(26, 26, 46, 0.8)';
+});
+
+uploadZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    uploadZone.style.borderColor = 'rgba(233, 69, 96, 0.5)';
+    uploadZone.style.background = 'rgba(26, 26, 46, 0.5)';
+});
+
+uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.style.borderColor = 'rgba(233, 69, 96, 0.5)';
+    uploadZone.style.background = 'rgba(26, 26, 46, 0.5)';
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        fileInput.files = e.dataTransfer.files;
+        displayFileInfo(file);
+        displayPreview(file);
+        uploadBtn.disabled = false;
+    }
+});
+
+function displayFileInfo(file) {
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    fileInfo.style.display = 'block';
+}
+
+function displayPreview(file) {
+    const fileType = file.type;
+    
+    if (fileType.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+            videoPreview.style.display = 'none';
+            previewArea.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else if (fileType.startsWith('video/')) {
+        const url = URL.createObjectURL(file);
+        videoPreview.src = url;
+        videoPreview.style.display = 'block';
+        imagePreview.style.display = 'none';
+        previewArea.style.display = 'block';
+    }
+}
+
+function clearFile() {
+    fileInput.value = '';
+    fileInfo.style.display = 'none';
+    previewArea.style.display = 'none';
+    uploadBtn.disabled = true;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Handle form submission
+uploadForm.addEventListener('submit', function(e) {
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    uploadProgress.style.display = 'block';
+    
+    // Simulate progress (actual progress would require XMLHttpRequest)
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+        }
+        progressBar.style.width = progress + '%';
+        progressPercent.textContent = Math.round(progress) + '%';
+    }, 500);
+});
+</script>
+{% endblock %}

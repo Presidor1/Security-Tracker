@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block title %}{{ suspect[1] }} - Suspect Profile{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">{{ suspect[1] }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-5 mb-2">
+                    <i class="fas fa-user-secret text-danger me-3"></i>
+                    {{ suspect[1] }}
+                </h1>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Added: {{ suspect[2] }}
+                    <span class="mx-3">|</span>
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Status: <span class="badge badge-{{ 'success' if suspect[4] == 'active' else 'secondary' }}">{{ suspect[4].upper() }}</span>
+                    <span class="mx-3">|</span>
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Risk: <span class="badge badge-{{ 'high' if suspect[5] == 'high' else 'medium' if suspect[5] == 'medium' else 'low' if suspect[5] == 'low' else 'unknown' }}">{{ suspect[5].upper() if suspect[5] else 'UNKNOWN' }}</span>
+                </p>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="generateReport('{{ suspect[1] }}')">
+                    <i class="fas fa-file-alt me-2"></i>Generate Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="row mb-4">
+    <div class="col-12">
+        <ul class="nav nav-pills" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview" type="button">
+                    <i class="fas fa-chart-pie me-2"></i>Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="media-tab" data-bs-toggle="pill" data-bs-target="#media" type="button">
+                    <i class="fas fa-photo-video me-2"></i>Media ({{ media_list|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="faces-tab" data-bs-toggle="pill" data-bs-target="#faces" type="button">
+                    <i class="fas fa-face-viewfinder me-2"></i>Faces ({{ faces|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="matches-tab" data-bs-toggle="pill" data-bs-target="#matches" type="button">
+                    <i class="fas fa-globe me-2"></i>Social Matches ({{ matches|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports" type="button">
+                    <i class="fas fa-file-alt me-2"></i>Reports ({{ reports|length }})
+                </button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Tab Content -->
+<div class="tab-content" id="profileTabContent">
+    
+    <!-- Overview Tab -->
+    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+        <div class="row">
+            <!-- Summary Cards -->
+            <div class="col-md-3 mb-4">
+                <div class="card stat-card">
+                    <i class="fas fa-photo-video text-info"></i>
+                    <div class="stat-number">{{ media_list|length }}</div>
+                    <div class="stat-label">Media Files</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card stat-card">
+                    <i class="fas fa-face-viewfinder text-warning"></i>
+                    <div class="stat-number">{{ faces|length }}</div>
+                    <div class="stat-label">Faces Extracted</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card stat-card">
+                    <i class="fas fa-globe text-success"></i>
+                    <div class="stat-number">{{ matches|length }}</div>
+                    <div class="stat-label">Social Matches</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card stat-card">
+                    <i class="fas fa-file-alt text-primary"></i>
+                    <div class="stat-number">{{ reports|length }}</div>
+                    <div class="stat-label">Reports</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Recent Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            {% for media in media_list[:5] %}
+                            <div class="timeline-item">
+                                <h6>Media Uploaded</h6>
+                                <p class="text-muted small mb-0">
+                                    {{ media[2] }} - {{ media[5] }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                            {% for match in matches[:3] %}
+                            <div class="timeline-item">
+                                <h6>Social Match Found</h6>
+                                <p class="text-muted small mb-0">
+                                    {{ match[2] }}: {{ match[4] }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Platform Distribution -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-share-alt me-2"></i>Platform Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if matches %}
+                            {% set platforms = {} %}
+                            {% for match in matches %}
+                                {% set platform = match[2] %}
+                                {% if platform in platforms %}
+                                    {% set _ = platforms.update({platform: platforms[platform] + 1}) %}
+                                {% else %}
+                                    {% set _ = platforms.update({platform: 1}) %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% for platform, count in platforms.items() %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="platform-icon platform-{{ platform|lower }}">
+                                        <i class="fab fa-{{ platform|lower }}"></i>
+                                    </div>
+                                    <span>{{ platform }}</span>
+                                </div>
+                                <span class="badge bg-primary">{{ count }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-4">
+                                <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                                No social matches found yet
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Media Tab -->
+    <div class="tab-pane fade" id="media" role="tabpanel">
+        <div class="row">
+            {% for media in media_list %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <small class="text-muted">{{ media[5] }}</small>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if media[4] == 'image' %}
+                        <img src="/{{ media[3] }}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <video src="/{{ media[3] }}" class="img-fluid w-100" style="height: 200px;" controls></video>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">{{ media[2] }}</h6>
+                        <p class="card-text small">
+                            <span class="badge bg-{{ 'success' if media[6] == 'completed' else 'warning' if media[6] == 'processing' else 'secondary' }}">
+                                {{ media[6].upper() }}
+                            </span>
+                            {% if media[7] %}
+                            <br><small class="text-muted mt-2 d-block">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ media[7] }}
+                            </small>
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('analyze_media_page', media_id=media[0]) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye me-1"></i>View Analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-photo-video fa-3x mb-3 text-muted"></i>
+                        <h5>No Media Files</h5>
+                        <p class="text-muted">Upload media to start analysis</p>
+                        <a href="{{ url_for('upload_media') }}" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>Upload Media
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Faces Tab -->
+    <div class="tab-pane fade" id="faces" role="tabpanel">
+        <div class="row">
+            {% for face in faces %}
+            <div class="col-md-3 mb-4">
+                <div class="card face-card">
+                    <img src="/{{ face[2] }}" alt="Extracted Face">
+                    <div class="face-overlay">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-white">Confidence</small>
+                                <div class="confidence-badge confidence-{{ 'high' if face[4] > 0.7 else 'medium' if face[4] > 0.4 else 'low' }}">
+                                    {{ "%.0f"|format(face[4] * 100) }}%
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="searchFace({{ face[0] }})">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        {% if face[5] %}
+                        <small class="text-white-50 d-block mt-2">
+                            Age: {{ face[5] }}
+                        </small>
+                        {% endif %}
+                        {% if face[6] %}
+                        <small class="text-white-50 d-block">
+                            Gender: {{ face[6] }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-face-viewfinder fa-3x mb-3 text-muted"></i>
+                        <h5>No Faces Extracted</h5>
+                        <p class="text-muted">Upload media with clear faces</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Social Matches Tab -->
+    <div class="tab-pane fade" id="matches" role="tabpanel">
+        <div class="row">
+            {% for match in matches %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="platform-icon platform-{{ match[2]|lower }} flex-shrink-0">
+                                <i class="fab fa-{{ match[2]|lower }}"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">{{ match[4] }}</h6>
+                                    <span class="confidence-badge confidence-{{ 'high' if match[6] > 0.7 else 'medium' if match[6] > 0.4 else 'low' }}">
+                                        {{ "%.0f"|format(match[6] * 100) }}% Match
+                                    </span>
+                                </div>
+                                <p class="mb-1">
+                                    <a href="{{ match[3] }}" target="_blank" class="text-info small">
+                                        {{ match[3][:50] }}{% if match[3]|length > 50 %}...{% endif %}
+                                    </a>
+                                </p>
+                                {% if match[8] %}
+                                <p class="text-muted small mb-1">
+                                    <i class="fas fa-info-circle me-1"></i>{{ match[8] }}
+                                </p>
+                                {% endif %}
+                                {% if match[7] %}
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ match[7] }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-globe fa-3x mb-3 text-muted"></i>
+                        <h5>No Social Matches</h5>
+                        <p class="text-muted">Social media search will run automatically after face extraction</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Reports Tab -->
+    <div class="tab-pane fade" id="reports" role="tabpanel">
+        <div class="row">
+            {% for report in reports %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-file-alt me-2"></i>
+                            {{ report[3]|upper }} Report
+                        </span>
+                        <small class="text-muted">{{ report[5] }}</small>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            Report Type: {{ report[3] }}<br>
+                            Generated: {{ report[5] }}
+                        </p>
+                        <button class="btn btn-sm btn-primary" onclick="viewReport({{ report[0] }})">
+                            <i class="fas fa-eye me-1"></i>View Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
+                        <h5>No Reports Generated</h5>
+                        <p class="text-muted">Generate a comprehensive intelligence report</p>
+                        <button class="btn btn-primary" onclick="generateReport('{{ suspect[1] }}')">
+                            <i class="fas fa-file-alt me-2"></i>Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title">Intelligence Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="reportContent">
+                <!-- Report content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function searchFace(faceId) {
+    if (confirm('Search this face on social media platforms?')) {
+        fetch('/search_face', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'face_id=' + faceId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Search completed! Found ' + data.matches_found + ' potential matches.');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Search failed. Please try again.');
+        });
+    }
+}
+
+function generateReport(suspectId) {
+    if (confirm('Generate comprehensive intelligence report?')) {
+        fetch('/generate_report/' + suspectId)
+        .then(response => response.json())
+        .then(data => {
+            alert('Report generated successfully!');
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Report generation failed. Please try again.');
+        });
+    }
+}
+
+function viewReport(reportId) {
+    // This would fetch and display the full report
+    alert('View report functionality - Report ID: ' + reportId);
+}
+</script>
+{% endblock %}

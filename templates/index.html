@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Security Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12">
+        <h1 class="display-5 mb-3">
+            <i class="fas fa-tachometer-alt text-danger me-3"></i>
+            Intelligence Dashboard
+        </h1>
+        <p class="lead text-muted">
+            Real-time suspect tracking and facial recognition analysis system
+        </p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card">
+            <i class="fas fa-user-secret"></i>
+            <div class="stat-number">{{ stats.total_suspects }}</div>
+            <div class="stat-label">Total Suspects</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card">
+            <i class="fas fa-photo-video"></i>
+            <div class="stat-number">{{ stats.total_uploads }}</div>
+            <div class="stat-label">Media Uploads</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card">
+            <i class="fas fa-face-viewfinder"></i>
+            <div class="stat-number">{{ stats.total_faces }}</div>
+            <div class="stat-label">Faces Extracted</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card">
+            <i class="fas fa-globe"></i>
+            <div class="stat-number">{{ stats.total_matches }}</div>
+            <div class="stat-label">Social Matches</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('upload_media') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-upload me-2"></i>Upload New Media
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-secondary w-100" onclick="document.getElementById('searchBox').focus()">
+                            <i class="fas fa-search me-2"></i>Search Suspects
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('api_suspects') }}" class="btn btn-secondary w-100" target="_blank">
+                            <i class="fas fa-code me-2"></i>View API Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>Search Intelligence Database
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <input type="text" id="searchBox" class="search-box" placeholder="Search by suspect ID, name, or keywords...">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <select class="search-box" id="platformFilter">
+                            <option value="">All Platforms</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="Twitter">Twitter</option>
+                            <option value="LinkedIn">LinkedIn</option>
+                            <option value="TikTok">TikTok</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-primary w-100" onclick="performSearch()">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+                <div id="searchResults"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Suspects -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Suspects
+                </h5>
+                <a href="{{ url_for('api_suspects') }}" class="btn btn-sm btn-outline-light" target="_blank">
+                    View All <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Suspect ID</th>
+                                <th>Date Added</th>
+                                <th>Risk Level</th>
+                                <th>Media Files</th>
+                                <th>Social Matches</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for suspect in recent_suspects %}
+                            <tr>
+                                <td>
+                                    <strong>{{ suspect[0] }}</strong>
+                                </td>
+                                <td>{{ suspect[1] }}</td>
+                                <td>
+                                    {% if suspect[2] == 'high' %}
+                                        <span class="badge badge-high">High</span>
+                                    {% elif suspect[2] == 'medium' %}
+                                        <span class="badge badge-medium">Medium</span>
+                                    {% elif suspect[2] == 'low' %}
+                                        <span class="badge badge-low">Low</span>
+                                    {% else %}
+                                        <span class="badge badge-unknown">Unknown</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <i class="fas fa-photo-video me-2 text-info"></i>
+                                    {{ suspect[3] }}
+                                </td>
+                                <td>
+                                    <i class="fas fa-globe me-2 text-success"></i>
+                                    {{ suspect[4] }}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('view_suspect', suspect_id=suspect[0]) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
+                                    <p class="text-muted">No suspects in database yet</p>
+                                    <a href="{{ url_for('upload_media') }}" class="btn btn-primary">
+                                        <i class="fas fa-upload me-2"></i>Upload First Media
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status -->
+<div class="row mt-5">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-microchip me-2"></i>System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Face Recognition Engine</span>
+                    <span class="badge bg-success">Operational</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Environment Analysis</span>
+                    <span class="badge bg-success">Operational</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Social Media Search</span>
+                    <span class="badge bg-success">Operational</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Database Connection</span>
+                    <span class="badge bg-success">Connected</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>How It Works
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h6>1. Upload Media</h6>
+                        <p class="text-muted small">Upload images or videos of suspects</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h6>2. Face Extraction</h6>
+                        <p class="text-muted small">System automatically extracts and analyzes faces</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h6>3. Location Analysis</h6>
+                        <p class="text-muted small">Environment is analyzed to detect location</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h6>4. Social Search</h6>
+                        <p class="text-muted small">Faces are searched across social media platforms</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h6>5. Generate Report</h6>
+                        <p class="text-muted small">Comprehensive intelligence report is created</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function performSearch() {
+    const query = document.getElementById('searchBox').value;
+    const platform = document.getElementById('platformFilter').value;
+    
+    if (!query && !platform) {
+        alert('Please enter search criteria');
+        return;
+    }
+    
+    // Build search URL
+    let url = '/api/search?';
+    if (query) url += 'q=' + encodeURIComponent(query);
+    if (platform) url += (query ? '&' : '') + 'platform=' + encodeURIComponent(platform);
+    
+    // Perform search
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            displaySearchResults(data);
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            document.getElementById('searchResults').innerHTML = 
+                '<div class="alert alert-danger">Search failed. Please try again.</div>';
+        });
+}
+
+function displaySearchResults(results) {
+    const container = document.getElementById('searchResults');
+    
+    if (results.length === 0) {
+        container.innerHTML = '<div class="alert alert-info mt-3">No results found</div>';
+        return;
+    }
+    
+    let html = '<div class="mt-4"><h6>Search Results (' + results.length + ' found)</h6><div class="row">';
+    
+    results.forEach(suspect => {
+        html += `
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">${suspect.suspect_id}</h6>
+                        <p class="card-text small text-muted">
+                            Added: ${suspect.created_at}<br>
+                            Risk: <span class="badge badge-${suspect.risk_level === 'high' ? 'high' : suspect.risk_level === 'medium' ? 'medium' : 'low'}">${suspect.risk_level}</span>
+                        </p>
+                        <a href="/suspect/${suspect.suspect_id}" class="btn btn-sm btn-primary">View Profile</a>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div></div>';
+    container.innerHTML = html;
+}
+
+// Allow Enter key to trigger search
+document.getElementById('searchBox').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSearch();
+    }
+});
+</script>
+{% endblock %}
