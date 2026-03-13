@@ -1,5 +1,3 @@
-Security Intelligence & Suspect Tracking System
-
 Python Dependencies
 
 Web Framework
