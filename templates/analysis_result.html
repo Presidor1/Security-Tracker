@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - {{ media[2] }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('view_suspect', suspect_id=media[1]) }}">{{ media[1] }}</a></li>
+                <li class="breadcrumb-item active">Analysis</li>
+            </ol>
+        </nav>
+        <h1 class="display-5 mb-3">
+            <i class="fas fa-microscope text-danger me-3"></i>
+            Analysis Results
+        </h1>
+    </div>
+</div>
+
+<!-- Media Preview -->
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-photo-video me-2"></i>{{ media[2] }}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if media[4] == 'image' %}
+                <img src="/{{ media[3] }}" class="img-fluid w-100">
+                {% else %}
+                <video src="/{{ media[3] }}" class="img-fluid w-100" controls></video>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>{{ media[5] }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <i class="fas fa-file me-1"></i>{{ media[4]|upper }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <i class="fas fa-check-circle me-1"></i>{{ media[6]|upper }}
+                        </small>
+                    </div>
+                </div>
+                {% if media[7] %}
+                <hr>
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <strong>Detected Location:</strong> {{ media[7] }}
+                    {% if media[8] %}
+                    <span class="badge bg-primary ms-2">{{ "%.0f"|format(media[8] * 100) }}% Confidence</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Tabs -->
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-pills mb-4" id="analysisTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="faces-tab" data-bs-toggle="pill" data-bs-target="#faces" type="button">
+                    <i class="fas fa-face-viewfinder me-2"></i>Extracted Faces ({{ faces|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="social-tab" data-bs-toggle="pill" data-bs-target="#social" type="button">
+                    <i class="fas fa-globe me-2"></i>Social Matches ({{ matches|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="technical-tab" data-bs-toggle="pill" data-bs-target="#technical" type="button">
+                    <i class="fas fa-cogs me-2"></i>Technical Details
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="analysisTabContent">
+            
+            <!-- Faces Tab -->
+            <div class="tab-pane fade show active" id="faces" role="tabpanel">
+                <div class="row">
+                    {% for face in faces %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Face #{{ loop.index }}</span>
+                                    <span class="confidence-badge confidence-{{ 'high' if face[4] > 0.7 else 'medium' if face[4] > 0.4 else 'low' }}">
+                                        {{ "%.0f"|format(face[4] * 100) }}%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <img src="/{{ face[2] }}" class="img-fluid w-100" style="max-height: 300px; object-fit: cover;">
+                            </div>
+                            <div class="card-body">
+                                {% if face[5] %}
+                                <p class="mb-1">
+                                    <i class="fas fa-birthday-cake me-2 text-info"></i>
+                                    Estimated Age: {{ face[5] }} years
+                                </p>
+                                {% endif %}
+                                {% if face[6] %}
+                                <p class="mb-1">
+                                    <i class="fas fa-venus-mars me-2 text-info"></i>
+                                    Gender: {{ face[6]|title }}
+                                </p>
+                                {% endif %}
+                                {% if face[7] %}
+                                <hr>
+                                <p class="mb-1 small text-muted">Emotion Analysis:</p>
+                                {% set emotions = face[7]|fromjson %}
+                                {% for emotion, score in emotions.items() %}
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-capitalize">{{ emotion }}</small>
+                                    <div class="progress flex-grow-1 mx-2" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ score * 100 }}%"></div>
+                                    </div>
+                                    <small>{{ "%.0f"|format(score * 100) }}%</small>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+                                <hr>
+                                <button class="btn btn-primary w-100" onclick="searchFace({{ face[0] }})">
+                                    <i class="fas fa-search me-2"></i>Search on Social Media
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="fas fa-face-viewfinder fa-3x mb-3 text-muted"></i>
+                                <h5>No Faces Detected</h5>
+                                <p class="text-muted">No faces were detected in this media file</p>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Possible reasons: Face too small, poor lighting, face obscured, or no face present
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Social Matches Tab -->
+            <div class="tab-pane fade" id="social" role="tabpanel">
+                <div class="row">
+                    {% for match in matches %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start">
+                                    <div class="platform-icon platform-{{ match[2]|lower }} flex-shrink-0">
+                                        <i class="fab fa-{{ match[2]|lower }}"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">{{ match[4] }}</h6>
+                                                <p class="mb-1">
+                                                    <a href="{{ match[3] }}" target="_blank" class="text-info small">
+                                                        {{ match[3][:60] }}{% if match[3]|length > 60 %}...{% endif %}
+                                                    </a>
+                                                </p>
+                                            </div>
+                                            <span class="confidence-badge confidence-{{ 'high' if match[6] > 0.7 else 'medium' if match[6] > 0.4 else 'low' }}">
+                                                {{ "%.0f"|format(match[6] * 100) }}%
+                                            </span>
+                                        </div>
+                                        {% if match[8] %}
+                                        <p class="text-muted small mb-2">
+                                            <i class="fas fa-info-circle me-1"></i>{{ match[8] }}
+                                        </p>
+                                        {% endif %}
+                                        {% if match[7] %}
+                                        <p class="text-muted small mb-2">
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ match[7] }}
+                                        </p>
+                                        {% endif %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>Found: {{ match[9] }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="fas fa-globe fa-3x mb-3 text-muted"></i>
+                                <h5>No Social Media Matches</h5>
+                                <p class="text-muted">No matches found on social media platforms yet</p>
+                                {% if faces %}
+                                <p class="text-muted small">
+                                    Click "Search on Social Media" on any extracted face to start searching
+                                </p>
+                                {% else %}
+                                <p class="text-muted small">
+                                    Faces must be extracted before social media search can be performed
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Technical Details Tab -->
+            <div class="tab-pane fade" id="technical" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-image me-2"></i>Image Analysis
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="text-muted">File Name</td>
+                                        <td>{{ media[2] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">File Type</td>
+                                        <td>{{ media[4]|upper }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Upload Date</td>
+                                        <td>{{ media[5] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Analysis Status</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if media[6] == 'completed' else 'warning' if media[6] == 'processing' else 'secondary' }}">
+                                                {{ media[6]|upper }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Faces Detected</td>
+                                        <td>{{ faces|length }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Location Analysis
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if media[7] %}
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-check-circle me-2"></i>Location Detected</h6>
+                                    <p class="mb-0">{{ media[7] }}</p>
+                                </div>
+                                {% if media[8] %}
+                                <p>Confidence: {{ "%.0f"|format(media[8] * 100) }}%</p>
+                                <div class="progress mb-3">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ media[8] * 100 }}%"></div>
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    No location could be determined from this media
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Processing Pipeline -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-project-diagram me-2"></i>Processing Pipeline
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="p-3 rounded bg-success">
+                                    <i class="fas fa-upload fa-2x mb-2"></i>
+                                    <h6 class="mb-0">Upload</h6>
+                                    <small class="text-white-50">Completed</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="p-3 rounded bg-{{ 'success' if faces else 'warning' }}">
+                                    <i class="fas fa-face-viewfinder fa-2x mb-2"></i>
+                                    <h6 class="mb-0">Face Extraction</h6>
+                                    <small class="text-white-50">
+                                        {{ faces|length }} faces found
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="p-3 rounded bg-{{ 'success' if media[7] else 'secondary' }}">
+                                    <i class="fas fa-map-marked-alt fa-2x mb-2"></i>
+                                    <h6 class="mb-0">Location Analysis</h6>
+                                    <small class="text-white-50">
+                                        {{ 'Completed' if media[7] else 'No location' }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="p-3 rounded bg-{{ 'success' if matches else 'secondary' }}">
+                                    <i class="fas fa-globe fa-2x mb-2"></i>
+                                    <h6 class="mb-0">Social Search</h6>
+                                    <small class="text-white-50">
+                                        {{ matches|length }} matches found
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('view_suspect', suspect_id=media[1]) }}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left me-2"></i>Back to Suspect Profile
+        </a>
+        <a href="{{ url_for('upload_media') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Upload More Media
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function searchFace(faceId) {
+    if (confirm('Search this face on social media platforms?')) {
+        const btn = event.target.closest('button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Searching...';
+        
+        fetch('/search_face', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'face_id=' + faceId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Search completed! Found ' + data.matches_found + ' potential matches.');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-search me-2"></i>Search on Social Media';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Search failed. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search me-2"></i>Search on Social Media';
+        });
+    }
+}
+</script>
+{% endblock %}
