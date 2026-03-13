@@ -1,27 +1,29 @@
-# Security Intelligence & Suspect Tracking System
-# Python Dependencies
+Security Intelligence & Suspect Tracking System
 
-# Web Framework
+Python Dependencies
+
+Web Framework
+
 Flask==2.3.3
 Werkzeug==2.3.7
 
-# Face Recognition
+Face Recognition
+
 face-recognition==1.3.0
 dlib==19.24.2
 
-# Image Processing
+Image Processing
+
 Pillow==10.0.0
-opencv-python==4.8.0.76
 opencv-contrib-python==4.8.0.76
 numpy==1.24.3
 
-# Web Scraping & HTTP
+Web Scraping & HTTP
+
 requests==2.31.0
 beautifulsoup4==4.12.2
 lxml==4.9.3
 
-# Database
-sqlite3-python==0.0.1
+Utilities
 
-# Utilities
 python-dateutil==2.8.2
